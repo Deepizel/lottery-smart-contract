@@ -67,11 +67,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     constructor(
         uint256 entranceFee,
         uint256 interval,
-        address _vrfCoordinator,
+        address vrfCoordinator,
         bytes32 gasLane,
         uint256 subscriptionId,
         uint32 callBackGasLimit
-    ) VRFConsumerBaseV2Plus(_vrfCoordinator) {
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
         i_keyHash = gasLane;
@@ -137,17 +137,17 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
         s_raffleState = RaffleState.CALCULATING;
         // Get random number
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
-                keyHash: i_keyHash,
-                subId: i_subscriptionId,
-                requestConfirmations: REQUEST_CONFIRMATIONS,
-                callbackGasLimit: i_callBackGasLimit,
-                numWords: NUM_WORDS,
-                // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
-            })
-        );
+        // uint256 requestId = s_vrfCoordinator.requestRandomWords(
+        //     VRFV2PlusClient.RandomWordsRequest({
+        //         keyHash: i_keyHash,
+        //         subId: i_subscriptionId,
+        //         requestConfirmations: REQUEST_CONFIRMATIONS,
+        //         callbackGasLimit: i_callBackGasLimit,
+        //         numWords: NUM_WORDS,
+        //         // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+        //         extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+        //     })
+        // );
 
         // fulfillRandomWords(requestId, randomWords);
     }
@@ -171,5 +171,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // getters
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
+    }
+ 
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getPlayer(uint256 indexOfPlayer) external view returns (address){
+       return s_players[indexOfPlayer]; 
     }
 }
