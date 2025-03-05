@@ -27,7 +27,7 @@ contract RaffleTest is Test {
 
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
-        (raffle, helperConfig) = deployer.run();
+        (raffle, helperConfig) = deployer.deployContract();
 
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
         entranceFee = config.entranceFee;
@@ -75,16 +75,46 @@ contract RaffleTest is Test {
     }
 
     function testDontAllowPlayersWhenCalculating() public {
-        // Arrange 
+        // Arrange
         vm.prank((PLAYER));
-            raffle.enterRaffle{value: entranceFee}();
-    vm.warp(block.timestamp + interval + 1);
-    vm.roll((block.number + 1));
-    raffle.performUpkeep("");
-    vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll((block.number + 1));
+        raffle.performUpkeep("");
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
         // Act
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
         // Assert
     }
+    /**************************CHECK UPKEEP  *************************************/
+    function testCheckUpKeepReturnsFalseIfItHasNoBalance() public {
+        // Arrange
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll((block.number + 1));
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        // Assert
+        assert(!upkeepNeeded);
+    }
+
+    function testCheckUpkeepReturnsFalseIfRaffleIsntOpen() public {
+        vm.prank((PLAYER));
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll((block.number + 1));
+        raffle.performUpkeep("");
+
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        // Assert
+        assert(!upkeepNeeded);
+    }
+
+    // Challenge
+    // testCheckUpkeepReturnsFalseIfTimeHasPassed
+    // testCheckUpkeepReturnsTrueWhenParametersAreGood
+
+
+    
 }
