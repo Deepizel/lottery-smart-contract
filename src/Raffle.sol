@@ -63,6 +63,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed winner);
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     constructor(
         uint256 entranceFee,
@@ -136,23 +137,25 @@ contract Raffle is VRFConsumerBaseV2Plus {
         }
 
         s_raffleState = RaffleState.CALCULATING;
-        // Get random number
-        // uint256 requestId = s_vrfCoordinator.requestRandomWords(
-        //     VRFV2PlusClient.RandomWordsRequest({
-        //         keyHash: i_keyHash,
-        //         subId: i_subscriptionId,
-        //         requestConfirmations: REQUEST_CONFIRMATIONS,
-        //         callbackGasLimit: i_callBackGasLimit,
-        //         numWords: NUM_WORDS,
-        //         // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-        //         extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
-        //     })
-        // );
-
-        // fulfillRandomWords(requestId, randomWords);
+         // Will revert if subscription is not set and funded.
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: i_keyHash,
+                subId: i_subscriptionId,
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: i_callBackGasLimit,
+                numWords: NUM_WORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            })
+        );
+        // Quiz... is this redundant?
+        emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(uint256, /*requestId*/ uint256[] calldata randomWords) internal override {
         // CEI: checks, effects, interactions
         // get the random words
         uint256 indexOfWinner = randomWords[0] % s_players.length;
@@ -179,5 +182,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function getPlayer(uint256 indexOfPlayer) external view returns (address){
        return s_players[indexOfPlayer]; 
+    }
+
+    function getLastTimeStamp() external view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRecentWinner() external view returns(address) {
+        return s_recentWinner;
     }
 }
